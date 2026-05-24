@@ -1,9 +1,32 @@
+---
+title: StarRailCopilot
+emoji: 🚆
+colorFrom: blue
+colorTo: indigo
+sdk: docker
+app_port: 7860
+pinned: false
+---
+
 **| [English](README_en.md) | 简体中文 | [Español](README_es.md) | [日本語](README_ja.md) |**
 
 
 # StarRailCopilot
 
 Star Rail auto script | 星铁速溶茶，崩坏：星穹铁道脚本，基于下一代Alas框架。
+
+## Hugging Face Spaces Docker 部署
+
+本分支包含 Hugging Face Docker Space 所需的 `Dockerfile`、`.dockerignore`、`docker-constraints.txt` 和 `hf_space_entrypoint.py`。Space 会通过 README front matter 使用 `sdk: docker`，并把 WebUI 暴露到 `app_port: 7860`。
+
+部署到 Hugging Face Spaces 时建议使用一个轻量 Space 仓库从本分支构建。容器启动时会自动生成 `config/deploy.yaml`，关闭自动更新、自动安装依赖、ADB 替换和自动连接，并强制监听 `0.0.0.0:${PORT:-7860}`。
+
+可选配置：
+
+- `SRC_WEBUI_PASSWORD`：设置为 Space Secret 后启用 WebUI 密码。
+- `SPACE_PASSWORD`：兼容备用密码变量，优先级低于 `SRC_WEBUI_PASSWORD`。
+
+限制说明：Hugging Face Spaces 不能运行 Windows 模拟器，也不适合直接托管游戏客户端。本 Docker Space 版本用于启动 SRC WebUI；实际自动化仍需要可从容器访问的 Android/ADB 或云游戏环境。
 
 ![gui](https://raw.githubusercontent.com/wiki/LmeSzinc/StarRailCopilot/README.assets/gui_cn.png)
 
