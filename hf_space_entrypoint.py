@@ -1,5 +1,6 @@
 import os
 import re
+import shutil
 import subprocess
 import sys
 from pathlib import Path
@@ -8,6 +9,8 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent
 DEPLOY_TEMPLATE = ROOT / "deploy" / "Windows" / "template.yaml"
 DEPLOY_CONFIG = ROOT / "config" / "deploy.yaml"
+PERSIST_ROOT = Path(os.environ.get("SRC_DATA_DIR", "/data/starrailcopilot"))
+PERSISTENT_DIRS = ("config", "log", "screenshots")
 
 
 def _yaml_scalar(value):
@@ -62,7 +65,61 @@ def ensure_deploy_config() -> None:
     DEPLOY_CONFIG.write_text(text, encoding="utf-8")
 
 
+def _copy_missing(source: Path, target: Path) -> None:
+    if not source.exists():
+        return
+
+    if source.is_dir():
+        target.mkdir(parents=True, exist_ok=True)
+        for child in source.iterdir():
+            _copy_missing(child, target / child.name)
+    elif not target.exists():
+        target.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(source, target)
+
+
+def _replace_with_symlink(source: Path, target: Path) -> None:
+    if source.is_symlink():
+        if source.resolve() == target.resolve():
+            return
+        source.unlink()
+    elif source.exists():
+        if source.is_dir():
+            shutil.rmtree(source)
+        else:
+            source.unlink()
+
+    source.symlink_to(target, target_is_directory=True)
+
+
+def prepare_persistent_paths() -> None:
+    data_root = PERSIST_ROOT.parent
+    if not data_root.exists():
+        print(f"[hf-space] Persistent storage mount not found at {data_root}; using image-local runtime data")
+        return
+
+    try:
+        test_file = data_root / ".src-write-test"
+        test_file.write_text("ok", encoding="utf-8")
+        test_file.unlink()
+    except OSError as exc:
+        print(f"[hf-space] Persistent storage unavailable at {data_root}: {exc}")
+        return
+
+    print(f"[hf-space] Using persistent runtime data at {PERSIST_ROOT}")
+    for dirname in PERSISTENT_DIRS:
+        app_path = ROOT / dirname
+        data_path = PERSIST_ROOT / dirname
+        data_path.mkdir(parents=True, exist_ok=True)
+
+        if app_path.exists() and not app_path.is_symlink():
+            _copy_missing(app_path, data_path)
+
+        _replace_with_symlink(app_path, data_path)
+
+
 def main() -> int:
+    prepare_persistent_paths()
     ensure_deploy_config()
     port = os.environ.get("PORT", "7860")
     cmd = [

@@ -21,6 +21,12 @@ Star Rail auto script | 星铁速溶茶，崩坏：星穹铁道脚本，基于�
 
 部署到 Hugging Face Spaces 时建议使用一个轻量 Space 仓库从本分支构建。容器启动时会自动生成 `config/deploy.yaml`，关闭自动更新、自动安装依赖、ADB 替换和自动连接，并强制监听 `0.0.0.0:${PORT:-7860}`。
 
+持久化说明：
+
+- 如果 Space 已挂载 Hugging Face Persistent Storage，容器会使用 `/data/starrailcopilot/config`、`/data/starrailcopilot/log` 和 `/data/starrailcopilot/screenshots` 保存运行数据。
+- 首次启动会把镜像内置的 `config` 模板复制到持久化目录，再把 `/app/config`、`/app/log`、`/app/screenshots` 链接到 `/data/starrailcopilot/*`。
+- 如果没有挂载 Persistent Storage，则回退到镜像内的临时目录；Space 重建或重启后运行配置和日志可能丢失。
+
 可选配置：
 
 - `SRC_WEBUI_PASSWORD`：设置为 Space Secret 后启用 WebUI 密码。
