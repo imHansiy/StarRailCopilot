@@ -34,7 +34,8 @@ WORKDIR /app
 
 COPY --chown=user:user requirements.txt docker-constraints.txt /app/
 RUN python -m pip install --upgrade pip setuptools wheel \
-    && PIP_CONSTRAINT=/app/docker-constraints.txt python -m pip install -r /app/requirements.txt
+    && PIP_CONSTRAINT=/app/docker-constraints.txt python -m pip install -r /app/requirements.txt \
+    && python -m pip install "psycopg[binary]>=3.2,<4"
 
 COPY --chown=user:user . /app
 RUN mkdir -p /app/config /app/log /app/screenshots /home/user/.cache/huggingface \

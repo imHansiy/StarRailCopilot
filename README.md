@@ -26,11 +26,17 @@ Star Rail auto script | 星铁速溶茶，崩坏：星穹铁道脚本，基于�
 - 如果 Space 已挂载 Hugging Face Persistent Storage，容器会使用 `/data/starrailcopilot/config`、`/data/starrailcopilot/log` 和 `/data/starrailcopilot/screenshots` 保存运行数据。
 - 首次启动会把镜像内置的 `config` 模板复制到持久化目录，再把 `/app/config`、`/app/log`、`/app/screenshots` 链接到 `/data/starrailcopilot/*`。
 - 如果没有挂载 Persistent Storage，则回退到镜像内的临时目录；Space 重建或重启后运行配置和日志可能丢失。
+- 也可以使用 PostgreSQL 保存配置：在 Space Secret 中设置 `SRC_DATABASE_URL` 后，启动时会从数据库恢复 `config/`，运行中默认每 60 秒同步一次配置回数据库。
 
 可选配置：
 
 - `SRC_WEBUI_PASSWORD`：设置为 Space Secret 后启用 WebUI 密码。
 - `SPACE_PASSWORD`：兼容备用密码变量，优先级低于 `SRC_WEBUI_PASSWORD`。
+- `SRC_DATABASE_URL`：PostgreSQL 连接串，例如 `postgresql://user:password@host:5432/dbname?sslmode=require`。
+- `SRC_PG_NAMESPACE`：数据库中的配置命名空间，默认使用 `SPACE_ID`，没有则为 `starrailcopilot`。
+- `SRC_PG_SYNC_INTERVAL`：PostgreSQL 配置同步间隔秒数，默认 `60`，设为 `0` 可只在启动和退出时同步。
+- `SRC_PG_SYNC_DIRS`：同步目录，默认 `config`；不建议把 `log` 或 `screenshots` 放进数据库。
+- `SRC_PG_EXCLUDES`：逗号分隔的排除路径，默认排除 `config/deploy.yaml`、`config/reloadalas` 和 `config/reloadflag`。
 
 限制说明：Hugging Face Spaces 不能运行 Windows 模拟器，也不适合直接托管游戏客户端。本 Docker Space 版本用于启动 SRC WebUI；实际自动化仍需要可从容器访问的 Android/ADB 或云游戏环境。
 
