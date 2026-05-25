@@ -828,6 +828,11 @@ class AlasGUI(Frame):
         put_scope("updater_info")
 
         def update_table():
+            def commit_row(label, commit):
+                if not commit or all(value is None for value in commit):
+                    return [label, "-", "-", "-", "-"]
+                return [label, *commit]
+
             with use_scope("updater_info", clear=True):
                 local_commit = updater.get_commit(short_sha1=True)
                 upstream_commit = updater.get_commit(
@@ -835,8 +840,8 @@ class AlasGUI(Frame):
                 )
                 put_table(
                     [
-                        [t("Gui.Update.Local"), *local_commit],
-                        [t("Gui.Update.Upstream"), *upstream_commit],
+                        commit_row(t("Gui.Update.Local"), local_commit),
+                        commit_row(t("Gui.Update.Upstream"), upstream_commit),
                     ],
                     header=[
                         "",
@@ -851,6 +856,10 @@ class AlasGUI(Frame):
                 history = updater.get_commit(
                     f"origin/{updater.Branch}", n=20, short_sha1=True
                 )
+                if not history or all(value is None for value in history):
+                    history = [("-", "-", "-", "-")]
+                elif isinstance(history, tuple):
+                    history = [history]
                 put_table(
                     [commit for commit in history],
                     header=[
